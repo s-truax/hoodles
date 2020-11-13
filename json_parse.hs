@@ -79,3 +79,14 @@ readString _ = ParseError
 -- my datatypes and then write intuitive interfaces for them in the form
 -- of functions. Ok. Go back to the drawing board and write out how you would
 -- want to interact with these data.
+
+{-
+I honestly don't even know what a good way to represent a JSON would be.
+Why would I even want to read a JSON into Haskell? Well, JSON is an
+interchange / serialization format, so really it's just a human-readable
+way of serializing data that is also easy (lol) to parse. I'm in a Python
+mindset: you can parse a JSON directly into a Python dictionary, which is
+very natural. An easier task might be writing some data out to a JSON from
+Haskell. But I guess it's also reasonable to have a standard Haskell JSON
+datatype that could be passed between functions. What should that be?
+-}
