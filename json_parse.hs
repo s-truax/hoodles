@@ -17,13 +17,15 @@ data ParseResult = ParsedJson JSON String | ParseError
 
 -- I just discovered I need getter functions for the above datatype.
 
-parsedJson :: ParseResult -> Maybe JSON
-parsedJson ParseError             = Nothing
-parsedJson (ParsedJson json src)  = json
+parsedVal :: ParseResult -> Maybe JSON
+parsedVal ParseError             = Nothing
+parsedVal (ParsedJson val src)  = Just val
 
-parsedSrc :: ParseResult -> Maybe JSON
-parsedSrc ParseError        = Nothing
-parsedSrc (ParsedJson json src) = json
+parsedSrc :: ParseResult -> Maybe String
+parsedSrc ParseError            = Nothing
+parsedSrc (ParsedJson val src)  = Just src
+
+maybeErr = maybe ParseError
 
 -- I've just realized we need to return a tuple with a string
 -- because after we parse the next "element", we need to know what's
@@ -34,21 +36,7 @@ parsedSrc (ParsedJson json src) = json
 -- all of the compound values, at least. Then a function to read the
 -- primitive values `null`, `true` and `false`.
 
-readObject :: String -> Maybe (JSON, String)
-readObject [] = Nothing
-readObject (x:xs)
-    | x == '}'  = Just (EmptyJSON, xs)
-    | otherwise = Nothing
-
 -- assume input is a token stream.
-
-parseJson :: String -> Maybe JSON
-parseJson "" = Just EmptyJSON
-parseJson (x:xs)
-    | x == '{'   = readObject xs
-    | x == '['   = readArray xs
-    | x == '"'   = readString xs
-    | otherwise  = readBool xs
 
 readValue :: String -> ParseResult
 readValue "" = ParseError
@@ -63,11 +51,31 @@ readValue (x:xs)
 readArray :: String -> ParseResult
 readArray "" = ParseError
 readArray (x:xs)
-    | x == ']'  = Array []
-    | otherwise = maybe ParseError (ParsedJson firstVal) restVals
-    where firstVal  = parsedJson $ readVal xs
-          src1      = parsedSrc  $ readVal xs
-          restParse = readArray $ tail src1
-          restVals  = parsedJson $ restParse
-          restSrc   = parsedSrc $ restParse
+    | x == ']'  = ParsedJson (Array []) xs
+    | otherwise = ParsedJson result restSrc
+    where firstVal  = parsedVal $ readVal xs
+          src1      = parsedVal $ readVal xs
+          restParse = maybeErr (readArray . tail) src1
+          restVals  = maybeErr parsedJson restParse
+          restSrc   = maybeErr parsedSrc restParse
+          result    = maybeErr (ParsedJson . (:) firstVal) restVals
 
+readObject :: String -> ParseResult
+readObject _ = ParseError
+
+readNum :: String -> ParseResult
+readNum _ = ParseError
+
+readAtom :: String -> ParseResult
+readAtom _ = ParseError
+
+readString :: String -> ParseResult
+readString _ = ParseError
+
+-- The maybe types are killing me. Everything has a maybe condition.
+-- I think the better way is really just to do it with a
+-- (Maybe JSON, Maybe String) deal.
+-- So I'm kind of seeing the deal here. I think I need to define all of
+-- my datatypes and then write intuitive interfaces for them in the form
+-- of functions. Ok. Go back to the drawing board and write out how you would
+-- want to interact with these data.
