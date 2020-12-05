@@ -11,13 +11,15 @@ data PQSymbol = P | Q | H deriving (Eq, Show)
 
 type PQString = [PQSymbol]
 
+type AbstractPQExpression = (Int, Int, Int)
+
 -- Convert a String into a list of PQ tokens
-tokenizePQ :: String -> Either String PQString
-tokenizePQ xs = case xs of []       -> Right []
+tokenizePQ :: String -> Maybe PQString
+tokenizePQ xs = case xs of []       -> Just []
                            ('p':xs) -> (:) <$> pure P <*> tokenizePQ xs
                            ('q':xs) -> (:) <$> pure Q <*> tokenizePQ xs
                            ('-':xs) -> (:) <$> pure H <*> tokenizePQ xs
-                           (x:xs)   -> Left ("Invalid token: " ++ [x])
+                           (x:xs)   -> Nothing
 
 -- Assert that a PQ-string is well formed.
 -- Future Feature: tell WHY this string is not valid.
