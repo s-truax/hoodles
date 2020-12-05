@@ -37,12 +37,12 @@ onlyHyphens = all (== H)
 -- is not hyphens.
 countHyphens :: PQString -> Maybe Int
 countHyphens xs = case xs of []        -> Just 0
-                             (H:ys)    -> (+) <$> 1 <*> countHyphens y
+                             (H:ys)    -> (+1) <$> countHyphens ys
                              otherwise -> Nothing
 
 -- Parse a PQ string.
 -- Future feature: custom monad for parsing PQ strings.
-parsePQ :: PQString -> Maybe (Int, Int, Int)
+parsePQ :: PQString -> Maybe AbstractPQExpression
 parsePQ xs = do
   [h1, [P], h2, [Q], h3] <- return $ group xs
   a                      <- countHyphens h1
@@ -50,8 +50,17 @@ parsePQ xs = do
   c                      <- countHyphens h3
   return (a, b, c)
 
--- TODO: Assert that a PQString is a theorem.
+-- Assert that a PQString is a theorem.
 -- Interestingly, in this system, it's easier to just check if something
 -- is a theroem than to check if it's well formed or not.
+-- The other option is to validate that the expression has the correct
+-- form, then to check if it's a theorem. Maybe this should be called
+-- isTrueStatement instead of isTheroem. isTheroem means it follows from the
+-- axioms.
 isTheroem :: PQString -> Bool
-isTheroem xs = case
+isTheroem xs = case parsePQ xs of Just (a, b, c) -> (a + b) == c
+                                  Nothing        -> False
+
+-- Determine if a string of the PQ system is a theorem of the PQ system.
+decideString :: String -> Bool
+decideString = maybe False isTheroem . tokenizePQ
