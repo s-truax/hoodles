@@ -69,6 +69,31 @@ isTheroem xs = case parsePQ xs of Just (a, b, c) -> (a + b) == c
 decideString :: String -> Bool
 decideString = maybe False isTheroem . tokenizePQ
 
+exprToText :: AbstractPQExpression -> String
+exprToText (x, y, z) = let
+  ps = repeat 'p'
+  qs = repeat 'q'
+  hs = repeat '-' in
+  take x hs ++ ['p'] ++ take y hs ++ ['q'] ++ take z hs
+
+-- TODO: Make the iterative version.
+-- Given the representation of a PQ theorem, explain how to produce it.
+inductiveDecisionProcedure :: AbstractPQExpression -> Maybe [String]
+inductiveDecisionProcedure (1, 1, 2) = Just ["Axiom rule to form -p-q--"]
+inductiveDecisionProcedure (x, y, z) = let
+  axiomRule = inductiveDecisionProcedure (x-1, y, z-1)
+  prodRule  = inductiveDecisionProcedure (x, y-1, z-1)
+  pqString  = exprToText (x, y, z)
+  axiomMsg  = "Use the axiom rule to form " ++ pqString
+  prodMsg   = "Use the rule of production to form " ++ pqString in
+  if x < 0 || y < 0 || z < 0
+    then Nothing
+      else
+        case (axiomRule, prodRule) of
+          (Just xs, _) -> (++ [axiomMsg]) <$> axiomRule
+          (_, Just xs) -> (++ [prodMsg]) <$> prodRule
+          otherwise    -> Nothing
+
 main = do
   putStrLn "Enter a string of the PQ-system:"
   input <- getLine
