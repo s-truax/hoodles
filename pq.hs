@@ -68,3 +68,10 @@ isTheroem xs = case parsePQ xs of Just (a, b, c) -> (a + b) == c
 -- Determine if a string of the PQ system is a theorem of the PQ system.
 decideString :: String -> Bool
 decideString = maybe False isTheroem . tokenizePQ
+
+main = do
+  putStrLn "Enter a string of the PQ-system:"
+  input <- getLine
+  let truthValue = show $ decideString input
+      message = "In the PQ-system, the truth value of this string is "
+  putStrLn (message ++ truthValue)
