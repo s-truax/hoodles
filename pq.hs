@@ -28,6 +28,10 @@ isValidPQ' xs = case group xs of
   [h1, [P], h2, [Q], h3] -> onlyHyphens (h1 ++ h2 ++ h3)
   otherwise              -> False
 
+isValidPQ :: PQString -> Bool
+isValidPQ xs = case parsePQ xs of Nothing  -> False
+                                  (Just _) -> True
+
 -- Assert that a PQ-string consists of only hyphens ('-')
 onlyHyphens :: PQString -> Bool
 onlyHyphens = all (== H)
