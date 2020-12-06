@@ -93,6 +93,20 @@ decideInductively (x, y, z)
                         "to form " ++ pqString
           prodMsg     = "Use the rule of production to form " ++ pqString
 
+intersperceFn :: (a -> a -> a) -> a -> [a] -> [a]
+intersperceFn f v []         = []
+intersperceFn f v (x:xs) = v `f` x : intersperceFn f x xs
+
+printDerivation :: [AbstractPQExpression] -> String
+printDerivation [] = ""
+printDerivation xs = let
+  msgFunction x y = "Apply the rule of production to " ++ x ++ " to form " ++ y
+  axiomMsg        = "Let x = " ++ hyphens ++ ". Then form the axiom " ++ axiom
+  hyphens         = takeWhile (/='p') axiom
+  axiom           = exprToText $ head xs in
+  unlines $ (axiomMsg:) $ intersperceFn msgFunction axiom $ map exprToText $
+    tail xs
+
 main = do
   putStrLn "Enter a string of the PQ-system:"
   input <- getLine
