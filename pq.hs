@@ -11,6 +11,55 @@ data PQSymbol = P | Q | H deriving (Eq, Show)
 
 type PQString = [PQSymbol]
 
+-- Data type representing derived theorems.
+-- (Theorems whose derivation is known).
+{-
+Note: It seems like this type is a lot more natural / easy to work with when
+using the bottom-up decision procedure. Probably because this type is
+not representing possible theorems, only known theorems. It doesn't need
+to represent arbitrary strings of the PQ system.
+
+What led me to making this type was wanting to implement the iterative
+decision procedure for the PQ system in addition to the inductive one. I was
+thinking about how to solve the problem from an object-oriented mindset. I was
+thinking "I would have some object representing a theorem that knew the
+theorem that came before it." I was trying to mimic that here. It seems like
+maybe I could have made the functions a bit more elegent, since Axiom is
+almost a special case of theorem. At least this version is explicit.
+-}
+data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
+                 deriving (Eq, Show)
+
+-- Infer a new theorem from an old one.
+productionRule :: PQTheorem -> PQTheorem
+productionRule a@(Axiom h1 h2 h3)        = Theorem h1 (h2 + 1) (h3 + 1) a
+productionRule t@(Theorem h1 h2 h3 prev) = Theorem h1 (h2 + 1) (h3 + 1) t
+
+-- Given a theorem, return the theorem that produced it using the
+-- rule of production. If the theorem is an axiom, just return the axiom.
+prevTheorem :: PQTheorem -> PQTheorem
+prevTheorem a@(Axiom _ _ _)         = a
+prevTheorem (Theorem h1 h2 h3 prev) = prev
+
+theoremToString :: PQTheorem -> String
+theoremToString thm = let
+  hyphens        = repeat '-'
+  buildStr x y z = take x hyphens ++ "p" ++ take y hyphens ++ "q" ++
+    take z hyphens in
+  case thm of (Axiom h1 h2 h3)     -> buildStr h1 h2 h3
+              (Theorem h1 h2 h3 _) -> buildStr h1 h2 h3
+
+printDerivation' :: PQTheorem -> String
+printDerivation' a@(Axiom h1 _ _) = let
+  hyphens = take h1 $ repeat '-' in
+  "Let x = " ++ hyphens ++ ". Then use the axiom rule to form "
+    ++ theoremToString a ++ ".\n"
+printDerivation' t@(Theorem h1 h2 h3 prev) = let
+  prevString = theoremToString prev
+  currString = theoremToString t in
+  printDerivation' prev ++ "Use the rule of production to form " ++
+    currString ++ " from " ++ prevString ++ ".\n"
+
 type AbstractPQExpression = (Int, Int, Int)
 
 -- Convert a String into a list of PQ tokens
@@ -93,6 +142,9 @@ decideInductively (x, y, z)
                         "to form " ++ pqString
           prodMsg     = "Use the rule of production to form " ++ pqString
 
+-- TODO: Find this in the standard libraries. Probably related to traversables.
+--       It's sort of like we're transitioning states. Maybe related to
+--       mapAccumL?
 intersperceFn :: (a -> a -> a) -> a -> [a] -> [a]
 intersperceFn f v []         = []
 intersperceFn f v (x:xs) = v `f` x : intersperceFn f x xs
