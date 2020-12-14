@@ -27,9 +27,6 @@ theorem that came before it." I was trying to mimic that here. It seems like
 maybe I could have made the functions a bit more elegent, since Axiom is
 almost a special case of theorem. At least this version is explicit.
 -}
-data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
-                 deriving (Eq, Show)
-
 {-
 Some more thoughts. This was prompted by wanting to make a function
 Axiom -> Theorem that would ONLY take in Axioms, not theorems, and
@@ -68,6 +65,9 @@ But the purist approach would be, I think, to make it so that you can't
 construct a malformed type.
 -}
 
+data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
+                 deriving (Eq, Show)
+
 -- Infer a new theorem from an old one.
 productionRule :: PQTheorem -> PQTheorem
 productionRule a@(Axiom h1 h2 h3)        = Theorem h1 (h2 + 1) (h3 + 1) a
@@ -97,6 +97,30 @@ printDerivation' t@(Theorem h1 h2 h3 prev) = let
   currString = theoremToString t in
   printDerivation' prev ++ "Use the rule of production to form " ++
     currString ++ " from " ++ prevString ++ ".\n"
+
+-- The (almost) purist's PQ Theorem / Derivation.
+-- Works b/c we only have one axiom rule and one rule of production.
+-- (Axiom k) is the (abs k)th axiom, and (ProduceFrom ds) is the rule of
+-- production repeatedly applied to ds.
+data Derivation = Axiom' Int | ProduceFrom Derivation (deriving Show)
+
+-- Left fold?
+countHyphens :: Derivation -> (Int, Int, Int)
+countHyphens (Axiom' k)       = (1, abs k
+countHyphens (ProduceFrom ds) = 1 + countHyphens ds
+
+-- TODO: Make nicer.
+interpret :: Derivation -> String
+interpret (Axiom' k) = let
+  hyphens = take (abs k) + 1 $ repeat '-'
+  axiom   = hyphens ++ "p" ++ "-" ++ "q" ++ hyphens ++ "-" in
+  "Let x = " ++ hyphens '-' ++ ". Then we may form the axiom xp-qx-, which" ++
+  "is " ++ axiom
+interpret (ProduceFrom ds) = let
+  sofar   = interpret ds
+  hyphens = countHyphens (ProduceFrom ds)
+  thm     = 
+  "Use the rule of production to produce "
 
 type AbstractPQExpression = (Int, Int, Int)
 
