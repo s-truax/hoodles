@@ -140,10 +140,11 @@ data PQTheorem'
   | Theorem' Int Int Int (PQTheorem') deriving (Eq, Show)
 
 -- Make the kth axiom. Aka, define 'x' in the axiom rule 'xp-qx-'
-axiom :: Int -> Maybe PQTheorem'
+-- Returns axiom 1 for k <= 0.
+axiom :: Int -> PQTheorem'
 axiom k
-  | k <= 0 = Nothing
-  | k > 0  = Just $ Axiom' k 1 (k + 1)
+  | k > 0  = Axiom' k 1 (k + 1)
+  | k <= 0 = axiom 1
 
 hyphens :: PQTheorem' -> (Int, Int, Int)
 hyphens (Axiom' left mid right)   = (left, mid, right)
