@@ -159,6 +159,9 @@ nextThm t = let
   (left, mid, right) = hyphens t in
   Theorem' left (mid + 1) (right + 1) t
 
+equateThms :: PQTheorem' -> (Int, Int, Int) -> Bool
+equateThms = (==) . hyphens
+
 type AbstractPQExpression = (Int, Int, Int)
 
 -- Convert a String into a list of PQ tokens
