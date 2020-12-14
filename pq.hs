@@ -65,6 +65,42 @@ But the purist approach would be, I think, to make it so that you can't
 construct a malformed type.
 -}
 
+{-
+So here's what I'm now struggling with. It's basically intractable to NOT use
+integers in my representation of PQ strings, and integers can be negative,
+which, from a purist point of view, causes problems. Because I have functions
+that could now take in things that are not representations of well-formed
+PQ strings.
+
+So I'm thinking of going the newtype module route now. I'm going to have to use
+a representation that uses ints (to make my life easier), so I think the best
+thing to do is to wrap my PQ theorems in an API that ONLY allows you to build
+theorems via the axiom rule and rules of inference. I think this will get us
+as close as possible to the "true" decision procedure for the PQ system, where
+you do an exhaustive search only using the PQ rules.
+
+Questions: If I'm going the API route, do I just use that API in my module, or
+should I make a separate module with the minimum constructors, then import
+everything?
+
+Maybe I'll go the hybrid route. Represent my theorems through a newtype API,
+but then put them in a derivation type that is constructed.
+
+Or maybe what I've done is just fine.
+
+1. API only route: Put theorems and derivations behind a secure API where
+   theorems and derivations are wrapped in newtypes, but users can only
+   construct axioms via one constructor and theorems via inferences from
+   an axiom or theorem.
+2. Mixed: Wrap the theorems in tuples and write a smart constructor that
+   ensures the int values are all strictly positive. Then explicitly construct
+   the Derivation type.
+3. Go the pure data route. Really hard b/c you need to represent naturals
+   explictly.
+
+4. (Secret?) Data with an API. Record syntax!
+-}
+
 data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
                  deriving (Eq, Show)
 
@@ -98,29 +134,29 @@ printDerivation' t@(Theorem h1 h2 h3 prev) = let
   printDerivation' prev ++ "Use the rule of production to form " ++
     currString ++ " from " ++ prevString ++ ".\n"
 
--- The (almost) purist's PQ Theorem / Derivation.
--- Works b/c we only have one axiom rule and one rule of production.
--- (Axiom k) is the (abs k)th axiom, and (ProduceFrom ds) is the rule of
--- production repeatedly applied to ds.
-data Derivation = Axiom' Int | ProduceFrom Derivation (deriving Show)
+-- Data and API
+data PQTheorem'
+  = Axiom' Int Int Int
+  | Theorem' Int Int Int (PQTheorem') deriving (Eq, Show)
 
--- Left fold?
-countHyphens :: Derivation -> (Int, Int, Int)
-countHyphens (Axiom' k)       = (1, abs k
-countHyphens (ProduceFrom ds) = 1 + countHyphens ds
+-- Make the kth axiom. Aka, define 'x' in the axiom rule 'xp-qx-'
+axiom :: Int -> Maybe PQTheorem'
+axiom k
+  | k <= 0 = Nothing
+  | k > 0  = Just $ Axiom' k 1 (k + 1)
 
--- TODO: Make nicer.
-interpret :: Derivation -> String
-interpret (Axiom' k) = let
-  hyphens = take (abs k) + 1 $ repeat '-'
-  axiom   = hyphens ++ "p" ++ "-" ++ "q" ++ hyphens ++ "-" in
-  "Let x = " ++ hyphens '-' ++ ". Then we may form the axiom xp-qx-, which" ++
-  "is " ++ axiom
-interpret (ProduceFrom ds) = let
-  sofar   = interpret ds
-  hyphens = countHyphens (ProduceFrom ds)
-  thm     = 
-  "Use the rule of production to produce "
+hyphens :: PQTheorem' -> (Int, Int, Int)
+hyphens (Axiom' left mid right)   = (left, mid, right)
+hyphens (Theorem' left mid right _) = (left, mid, right)
+
+prevThm :: PQTheorem' -> PQTheorem'
+prevThm t = case t of (Theorem' _ _ _ prev) -> prev
+                      otherwise             -> t
+
+nextThm :: PQTheorem' -> PQTheorem'
+nextThm t = let
+  (left, mid, right) = hyphens t in
+  Theorem' left (mid + 1) (right + 1) t
 
 type AbstractPQExpression = (Int, Int, Int)
 
