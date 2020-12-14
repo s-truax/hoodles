@@ -30,6 +30,44 @@ almost a special case of theorem. At least this version is explicit.
 data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
                  deriving (Eq, Show)
 
+{-
+Some more thoughts. This was prompted by wanting to make a function
+Axiom -> Theorem that would ONLY take in Axioms, not theorems, and
+apply the rule of production. I had some trouble squaring this, since
+axioms ARE theorems. I think, if I actually did want to do this,
+the solution would be to use the newtype keyword to make axiom and theorem
+types. One use of the newtype keyword is to tell the type checker that you
+want two things that are actually the same to be considered different things.
+
+But even if I could make that function, it would operate on some representation
+of a PQ theorem, which would probably most naturally be an (Int, Int, Int). The
+problem here is that my abstract representation of a PQ string isn't isomorphic
+to PQ strings. I can represent malformed PQ strings as an (Int, Int, Int), like
+(-1, 0, 10). I also can't represent PQ strings like --q--p--qp--, but that isn't
+as problematic, it just reinforces the fact that there isn't a clear
+isomorphism.
+
+So this seems to be a fundamental issue you run into with using types to model
+your problem. My (Int, Int, Int) grammar can express things that don't make
+sense in the grammer I'm trying to model. (Int, Int, Int) can represent PQ
+expressions that don't make sense.
+
+So this is where I'm thinking of "type safety". I get what it means now to
+want to use types to make impossible situations inexpressible. Ideally, I should
+be able to model a well-formed PQ string in a type where it is IMPOSSIBLE to
+construct a malphormed PQ string. I think this would ideally be a 3-tuple of
+nonzero natural numbers.
+
+Takeaways here: your constructors are a good place to enforce invarients. Also,
+you can sometimes lose totality when you represent one "grammar" with a
+superset of that grammar. The example is that a three tuple of ints can
+represent nonsensical pq strings.
+
+In practice, this probably wouldn't matter. Just wrap everything in "Maybe."
+But the purist approach would be, I think, to make it so that you can't
+construct a malformed type.
+-}
+
 -- Infer a new theorem from an old one.
 productionRule :: PQTheorem -> PQTheorem
 productionRule a@(Axiom h1 h2 h3)        = Theorem h1 (h2 + 1) (h3 + 1) a
@@ -146,7 +184,7 @@ decideInductively (x, y, z)
 --       It's sort of like we're transitioning states. Maybe related to
 --       mapAccumL?
 intersperceFn :: (a -> a -> a) -> a -> [a] -> [a]
-intersperceFn f v []         = []
+intersperceFn f v []     = []
 intersperceFn f v (x:xs) = v `f` x : intersperceFn f x xs
 
 printDerivation :: [AbstractPQExpression] -> String
