@@ -98,8 +98,22 @@ Or maybe what I've done is just fine.
 3. Go the pure data route. Really hard b/c you need to represent naturals
    explictly.
 
-4. (Secret?) Data with an API. Record syntax!
+4. (Secret?) Data with an API. Record syntax! (Doesn't work with union types).
 -}
+{-
+So, big problems were
+1. Parsing PQ strings to tokens.
+2. Representing PQ strings as Haskell data.
+3. Allowing users to write and check theorems of the system.
+4. Inductive vs exhaustive decidability.
+5. Printing out derivations.
+
+Definitely getting a sense for using monads as failure contexts, and also the
+mantra "parse, don't validate".
+-}
+
+-- TODO: Redo the theorem types with Liquid Haskell refinement types. See if
+--       that makes things any better.
 
 data PQTheorem = Axiom Int Int Int | Theorem Int Int Int (PQTheorem)
                  deriving (Eq, Show)
