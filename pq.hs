@@ -176,6 +176,20 @@ nextThm t = let
 equateThms :: PQTheorem' -> (Int, Int, Int) -> Bool
 equateThms = (==) . hyphens
 
+theoremLen :: PQTheorem' -> Int
+theoremLen = (\(x, y, z) -> x + y + z) . hyphens
+
+decideExhaustively' :: [PQTheorem'] -> PQTheorem' -> PQTheorem' -> Bool
+decideExhaustively' bucket ax thm
+  | thm `elem` bucket              = True
+  | theoremLen ax > theoremLen thm = False
+  | otherwise                      = decideExhaustively' newBucket nextAx thm
+  where newBucket = nextAx : map nextThm bucket
+        nextAx    = nextThm ax
+
+decideExhaustively :: PQTheorem' -> Bool
+decideExhaustively = decideExhaustively' [axiom 1] (axiom 1)
+
 type AbstractPQExpression = (Int, Int, Int)
 
 -- Convert a String into a list of PQ tokens
