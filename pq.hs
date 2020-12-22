@@ -5,7 +5,8 @@
 -- well-formed and then try to parse them, raising an error if they are not
 -- well formed. The error case means they are not well-formed.
 
-import Data.List (group)
+import Data.List (find, group)
+import Data.Maybe (isJust)
 
 data PQSymbol = P | Q | H deriving (Eq, Show)
 
@@ -176,19 +177,29 @@ nextThm t = let
 equateThms :: PQTheorem' -> (Int, Int, Int) -> Bool
 equateThms = (==) . hyphens
 
+tripleSum :: (Int, Int, Int) -> Int
+tripleSum (x, y, z) = x + y + z
+
 theoremLen :: PQTheorem' -> Int
-theoremLen = (\(x, y, z) -> x + y + z) . hyphens
+theoremLen = tripleSum . hyphens
 
-decideExhaustively' :: [PQTheorem'] -> PQTheorem' -> PQTheorem' -> Bool
-decideExhaustively' bucket ax thm
-  | thm `elem` bucket              = True
-  | theoremLen ax > theoremLen thm = False
-  | otherwise                      = decideExhaustively' newBucket nextAx thm
-  where newBucket = nextAx : map nextThm bucket
-        nextAx    = nextThm ax
+-- Changed this b/c the only way to construct PQTheorem' values is via the
+-- rules of production, so really, if you are holding a string you know it's
+-- a theorem.
+decideExhaustively' :: [PQTheorem'] -> Int -> (Int, Int, Int)
+  -> Maybe PQTheorem'
+decideExhaustively' bucket n thm
+  | theoremLen currAx > tripleSum thm  = Nothing
+  | isJust foundThm                    = foundThm
+  | otherwise                          = decideExhaustively' newBucket (n + 1)
+                                            thm
+  where foundThm  = find (`equateThms` thm) bucket
+        newBucket = nextAx : map nextThm bucket
+        currAx    = axiom n
+        nextAx    = axiom (n + 1)
 
-decideExhaustively :: PQTheorem' -> Bool
-decideExhaustively = decideExhaustively' [axiom 1] (axiom 1)
+decideExhaustively :: (Int, Int, Int) -> Maybe PQTheorem'
+decideExhaustively = decideExhaustively' [axiom 1] 1
 
 type AbstractPQExpression = (Int, Int, Int)
 
