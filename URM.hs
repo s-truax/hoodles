@@ -15,7 +15,7 @@ execS :: [Int] -> Int -> [Int]
 execS urm = modifyRegister urm (\x -> x + 1)
 
 execT :: [Int] -> Int -> Int -> [Int]
-execT urm n = modifyRegister urm (\x -> urm !! n)
+execT urm m n = modifyRegister urm (\x -> urm !! m) n
 
 execJ urm m n q curr =
   if (urm !! m) == (urm !! n)
