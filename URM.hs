@@ -24,7 +24,7 @@ execJ urm m n q curr =
 
 runProgram' urm p currInstrNum =
   if currInstrNum >= length p
-    then head urm
+    then urm
          else
   case p !! currInstrNum of (Z n)     ->
                               runProgram' (execZ urm n) p (currInstrNum + 1)
@@ -35,7 +35,7 @@ runProgram' urm p currInstrNum =
                             (J n m q) ->
                               runProgram' urm p (execJ urm n m q currInstrNum)
 
-runProgram urm p = runProgram' urm p 0
+runProgram urm p = head $ runProgram' urm p 0
 
 
 -- Interactive tests
