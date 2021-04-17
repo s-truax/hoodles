@@ -55,6 +55,13 @@ runProgramVerbose = runProgramVerbose' 7 0
 
 -- Utility functions
 
+-- Make all jump instructions J m n q jump to J m n (q + newStart)
+pushJumps :: Int -> [Instruction] -> [Instruction]
+pushJumps newStart = let
+  editor (J m n q) = (J m n (newStart + q))
+  editor instr     = instr in
+  map editor
+
 -- Put a URM program in standard form
 standardize :: [Instruction] -> [Instruction]
 standardize program = let
@@ -62,6 +69,10 @@ standardize program = let
   editor instr@(J m n q) = if q > s then (J m n s) else instr
   editor instr           = instr in
   map editor program
+
+-- Standardizes then concatenates two programs
+concatPrograms :: [Instruction] -> [Instruction] -> [Instruction]
+concatPrograms p q = standardize p ++ pushJumps (length p) (standardize q)
 
 -- Debug functions
 pprintStates :: [[Int]] -> IO ()
