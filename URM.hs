@@ -3,25 +3,24 @@ data Instruction = Z Int | S Int | T Int Int | J Int Int Int
 newURM :: [Int] -> [Int]
 newURM state = state ++ repeat 0
 
-changeRegister :: [Int] -> (Int -> Int) -> Int -> [Int]
-changeRegister urm f 0   = f (head urm) : tail urm
-changeRegister urm f reg = head urm : changeRegister (tail urm) f (reg - 1)
+-- Replace the value in register 'reg' with 'f' applied to that value
+modifyRegister :: [Int] -> (Int -> Int) -> Int -> [Int]
+modifyRegister urm f 0   = f (head urm) : tail urm
+modifyRegister urm f reg = head urm : modifyRegister (tail urm) f (reg - 1)
 
 execZ :: [Int] -> Int -> [Int]
-execZ urm = changeRegister urm (\x -> 0)
+execZ urm = modifyRegister urm (\x -> 0)
 
 execS :: [Int] -> Int -> [Int]
-execS urm = changeRegister urm (\x -> x + 1)
+execS urm = modifyRegister urm (\x -> x + 1)
 
 execT :: [Int] -> Int -> Int -> [Int]
-execT urm n = changeRegister urm (\x -> urm !! n)
+execT urm n = modifyRegister urm (\x -> urm !! n)
 
 execJ urm m n q curr =
   if (urm !! m) == (urm !! n)
     then q
       else curr + 1
-
-runProgram urm p = runProgram' urm p 0
 
 runProgram' urm p currInstrNum =
   if currInstrNum >= length p
@@ -35,6 +34,8 @@ runProgram' urm p currInstrNum =
                               runProgram' (execT urm n m) p (currInstrNum + 1)
                             (J n m q) ->
                               runProgram' urm p (execJ urm n m q currInstrNum)
+
+runProgram urm p = runProgram' urm p 0
 
 
 -- Interactive tests
