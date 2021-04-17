@@ -55,6 +55,14 @@ runProgramVerbose = runProgramVerbose' urm p 0 7
 
 -- Utility functions
 
+-- Put a URM program in standard form
+standardize :: [Instruction] -> [Instruction]
+standardize program = let
+  s                = length program
+  editor instr@(J m n q) = if q > s then (J m n s) else instr
+  editor instr           = instr in
+  map editor program
+
 -- Debug functions
 pprintStates :: [[Int]] -> IO ()
 pprintStates = putStrLn . unlines . map show
