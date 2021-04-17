@@ -1,4 +1,4 @@
-data Instruction = Z Int | S Int | T Int Int | J Int Int Int
+data Instruction = Z Int | S Int | T Int Int | J Int Int Int deriving Show
 
 newURM :: [Int] -> [Int]
 newURM state = state ++ repeat 0
@@ -35,8 +35,23 @@ runProgram' urm p currInstrNum =
                             (J m n q) ->
                               runProgram' urm p (execJ urm m n q currInstrNum)
 
+runProgramVerbose' urm p currInstrNum k = 
+  if currInstrNum >= length p then [] else
+    case p !! currInstrNum of
+      (Z n)     -> [(take k urm, take k $ execZ urm n, (Z n))] ++
+                     runProgramVerbose' (execZ urm n) p (currInstrNum + 1) k 
+      (S n)     -> [(take k urm, take k $ execS urm n, (S n))] ++
+                     runProgramVerbose' (execS urm n) p (currInstrNum + 1) k
+      (T m n)   -> [(take k urm, take k $ execT urm m n, (T m n))] ++
+                     runProgramVerbose' (execT urm m n) p (currInstrNum + 1) k
+      (J m n q) -> [(take k urm, take k urm, (J m n q))] ++
+                     runProgramVerbose' urm p (execJ urm m n q currInstrNum) k
+  
 runProgram urm p = head $ runProgram' urm p 0
 
+
+-- Debug functions
+pprintStates = putStrLn . unlines . map show
 
 -- Interactive tests
 twothree = newURM [2, 3]
