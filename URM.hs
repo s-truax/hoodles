@@ -30,10 +30,10 @@ runProgram' urm p currInstrNum =
                               runProgram' (execZ urm n) p (currInstrNum + 1)
                             (S n)     ->
                               runProgram' (execS urm n) p (currInstrNum + 1)
-                            (T n m)   ->
-                              runProgram' (execT urm n m) p (currInstrNum + 1)
-                            (J n m q) ->
-                              runProgram' urm p (execJ urm n m q currInstrNum)
+                            (T m n)   ->
+                              runProgram' (execT urm m n) p (currInstrNum + 1)
+                            (J m n q) ->
+                              runProgram' urm p (execJ urm m n q currInstrNum)
 
 runProgram urm p = head $ runProgram' urm p 0
 
