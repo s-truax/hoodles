@@ -1,3 +1,5 @@
+import Data.List (maximumBy)
+-- Derive functor? Bifunctor?
 data Instruction = Z Int | S Int | T Int Int | J Int Int Int deriving Show
 
 newURM :: [Int] -> [Int]
@@ -73,6 +75,16 @@ standardize program = let
 -- Standardizes then concatenates two programs
 concatPrograms :: [Instruction] -> [Instruction] -> [Instruction]
 concatPrograms p q = standardize p ++ pushJumps (length p) (standardize q)
+
+maxVal :: Instruction -> Int
+maxVal (S n)     = n
+maxVal (Z n)     = n
+maxVal (T m n)   = max m n
+maxVal (J m n q) = maximum [m, n, q]
+
+-- Smallest number larger than all registers mentioned in the program.
+rho :: [Instruction] -> Int
+rho = (+1) . maximum . map maxVal
 
 -- Debug functions
 pprintStates :: [[Int]] -> IO ()
