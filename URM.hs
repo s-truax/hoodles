@@ -35,6 +35,9 @@ runProgram' urm p currInstrNum =
                             (J m n q) ->
                               runProgram' urm p (execJ urm m n q currInstrNum)
 
+runProgram urm p = head $ runProgram' urm p 0
+
+-- Run the URM in verbose mode. K is the number of registers to print.
 runProgramVerbose' urm p currInstrNum k = 
   if currInstrNum >= length p then [] else
     case p !! currInstrNum of
@@ -46,11 +49,14 @@ runProgramVerbose' urm p currInstrNum k =
                      runProgramVerbose' (execT urm m n) p (currInstrNum + 1) k
       (J m n q) -> [(take k urm, take k urm, (J m n q))] ++
                      runProgramVerbose' urm p (execJ urm m n q currInstrNum) k
-  
-runProgram urm p = head $ runProgram' urm p 0
 
+-- Print 7 registers by default. 
+runProgramVerbose = runProgramVerbose' urm p 0 7
+
+-- Utility functions
 
 -- Debug functions
+pprintStates :: [[Int]] -> IO ()
 pprintStates = putStrLn . unlines . map show
 
 -- Interactive tests
@@ -59,6 +65,7 @@ five = newURM [5]
 
 addP = [(J 2 1 4), (S 0), (S 2), (J 0 0 0)] -- Computes x + y
 sub1 = [(J 0 2 6), (S 2), (J 0 2 6), (S 1), (S 2), (J 0 0 2), (T 1 0)]
+sub  = []  -- TODO
 
 test1 = runProgram twothree addP -- should output 5
 test2 = runProgram five sub1     -- expect 4
