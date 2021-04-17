@@ -38,20 +38,20 @@ runProgram' urm p currInstrNum =
 runProgram urm p = head $ runProgram' urm p 0
 
 -- Run the URM in verbose mode. K is the number of registers to print.
-runProgramVerbose' urm p currInstrNum k = 
+runProgramVerbose' k currInstrNum p urm = 
   if currInstrNum >= length p then [] else
     case p !! currInstrNum of
       (Z n)     -> [(take k urm, take k $ execZ urm n, (Z n))] ++
-                     runProgramVerbose' (execZ urm n) p (currInstrNum + 1) k 
+                     runProgramVerbose' k (currInstrNum + 1) p (execZ urm n)
       (S n)     -> [(take k urm, take k $ execS urm n, (S n))] ++
-                     runProgramVerbose' (execS urm n) p (currInstrNum + 1) k
+                     runProgramVerbose' k (currInstrNum + 1) p (execS urm n)
       (T m n)   -> [(take k urm, take k $ execT urm m n, (T m n))] ++
-                     runProgramVerbose' (execT urm m n) p (currInstrNum + 1) k
+                     runProgramVerbose' k (currInstrNum + 1) p (execT urm m n)
       (J m n q) -> [(take k urm, take k urm, (J m n q))] ++
-                     runProgramVerbose' urm p (execJ urm m n q currInstrNum) k
+                     runProgramVerbose' k (execJ urm m n q currInstrNum) p urm
 
 -- Print 7 registers by default. 
-runProgramVerbose = runProgramVerbose' urm p 0 7
+runProgramVerbose = runProgramVerbose' 7 0
 
 -- Utility functions
 
