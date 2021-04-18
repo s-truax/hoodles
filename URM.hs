@@ -76,15 +76,26 @@ standardize program = let
 concatPrograms :: [Instruction] -> [Instruction] -> [Instruction]
 concatPrograms p q = standardize p ++ pushJumps (length p) (standardize q)
 
+-- return the maximum register referenced by an instruction
 maxVal :: Instruction -> Int
 maxVal (S n)     = n
 maxVal (Z n)     = n
 maxVal (T m n)   = max m n
-maxVal (J m n q) = maximum [m, n, q]
+maxVal (J m n q) = maximum [ m, n, q ]
 
 -- Smallest number larger than all registers mentioned in the program.
 rho :: [Instruction] -> Int
 rho = (+1) . maximum . map maxVal
+
+-- Takes a list of register locations and a program. Returns a new
+-- program that computes the given program on the inputs in the given
+-- registers, then moves the result to the desired register
+moveComputeMove :: [Int] -> Int -> [Instruction] -> [Instruction]
+moveComputeMove starts end p = let
+  transfers = [ T m n | (m, n) <- zip starts [0, 1..] ]
+  store     = [ T 0  end ] in
+  transfers `concatPrograms` p `concatPrograms` store
+  
 
 -- Debug functions
 pprintStates :: [[Int]] -> IO ()
