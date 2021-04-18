@@ -67,7 +67,7 @@ pushJumps newStart = let
 -- Put a URM program in standard form
 standardize :: [Instruction] -> [Instruction]
 standardize program = let
-  s                = length program
+  s                      = length program
   editor instr@(J m n q) = if q > s then (J m n s) else instr
   editor instr           = instr in
   map editor program
@@ -100,6 +100,17 @@ moveComputeMove starts end p = let
   transfers = [ T m n | (m, n) <- zip starts [0, 1..] ]
   store     = [ T 0 end ] in
   transfers `concatPrograms` p `concatPrograms` store
+
+moveComputeMoveMany :: [Int] -> Int -> [[Instruction]] -> [Instruction]
+moveComputeMoveMany starts end ps = let
+  k = length ps
+  shifters = [ moveComputeMove starts (end + i) | i <- [0..(k - 1)] ] in
+  foldr concatPrograms [] [ shifter p | (shifter, p) <- zip shifters ps ]
+
+-- Write a new program that pushes the input arguments of a program of
+-- a given arity to begin at register `offset`
+moveArgs :: Int -> Int -> [Instruction]
+moveArgs offset arity = [ T i (offset + i) | i <- [0..(arity - 1)] ]
 
 -- compose the program that computes f with the programs that compute g_i.
 -- we need to specify the arity of f and the gs.
