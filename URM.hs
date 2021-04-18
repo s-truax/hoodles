@@ -87,14 +87,37 @@ maxVal (J m n q) = maximum [ m, n, q ]
 rho :: [Instruction] -> Int
 rho = (+1) . maximum . map maxVal
 
+-- projection i returns the functon that takes the ith argument of n
+-- input arguments
+projection :: Int -> [Instruction]
+projection i = [ T i 0]
+
 -- Takes a list of register locations and a program. Returns a new
 -- program that computes the given program on the inputs in the given
 -- registers, then moves the result to the desired register
 moveComputeMove :: [Int] -> Int -> [Instruction] -> [Instruction]
 moveComputeMove starts end p = let
   transfers = [ T m n | (m, n) <- zip starts [0, 1..] ]
-  store     = [ T 0  end ] in
+  store     = [ T 0 end ] in
   transfers `concatPrograms` p `concatPrograms` store
+
+-- compose the program that computes f with the programs that compute g_i.
+-- we need to specify the arity of f and the gs.
+-- Also... am I abusing `let`? How do I not make my function definitions (h)uge?
+-- Debug:
+-- TODO: Break down these let bindings and test them individually.
+compose :: Int -> Int -> [Instruction] -> [[Instruction]] -> [Instruction]
+compose fArity gsArity f gs = let
+  n        = gsArity
+  k        = fArity
+  gsMaxRho = maximum $ map rho gs
+  m        = maximum [ fArity, gsArity, rho f, gsMaxRho ]
+  pushArgs = [ T i (m + i) | i <- [0..(n - 1)] ]
+  runGs    = [ moveComputeMove [m..(m + n - 1)] (m + n + i) g | (i, g) <- zip [0..(k - 1)] gs ]
+  concatGs = foldr concatPrograms [] runGs
+  runF     = moveComputeMove [(m + n)..(m + n + k - 1)] 0 f
+  in pushArgs `concatPrograms` concatGs `concatPrograms` runF
+  
   
 
 -- Debug functions
