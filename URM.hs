@@ -83,9 +83,9 @@ maxVal (Z n)     = n
 maxVal (T m n)   = max m n
 maxVal (J m n q) = maximum [ m, n, q ]
 
--- Smallest number larger than all registers mentioned in the program.
+-- Smallest number u s.t all v > u are not mentioned in P.
 rho :: [Instruction] -> Int
-rho = (+1) . maximum . map maxVal
+rho = maximum . map maxVal
 
 -- projection i returns the functon that takes the ith argument of n
 -- input arguments
@@ -97,10 +97,16 @@ projection i = [ T i 0]
 -- registers, then moves the result to the desired register
 moveComputeMove :: [Int] -> Int -> [Instruction] -> [Instruction]
 moveComputeMove starts end p = let
+  n         = length starts  -- arity
+  rhoP      = rho p
+  clears    = [ Z i | i <- [n..rhoP] ]
   transfers = [ T m n | (m, n) <- zip starts [0, 1..] ]
   store     = [ T 0 end ] in
-  transfers `concatPrograms` p `concatPrograms` store
+  transfers `concatPrograms` clears `concatPrograms` p `concatPrograms` store
 
+-- Take agruments from registers in `starts`, compute them, then move 
+-- the output to `end`. Do this for each program in `ps`, where the
+-- output of program p_i will be at end + i (indexed from 0)
 moveComputeMoveMany :: [Int] -> Int -> [[Instruction]] -> [Instruction]
 moveComputeMoveMany starts end ps = let
   k = length ps
@@ -119,15 +125,14 @@ moveArgs offset arity = [ T i (offset + i) | i <- [0..(arity - 1)] ]
 -- TODO: Break down these let bindings and test them individually.
 compose :: Int -> Int -> [Instruction] -> [[Instruction]] -> [Instruction]
 compose fArity gsArity f gs = let
-  n        = gsArity
-  k        = fArity
-  gsMaxRho = maximum $ map rho gs
-  m        = maximum [ fArity, gsArity, rho f, gsMaxRho ]
-  pushArgs = [ T i (m + i) | i <- [0..(n - 1)] ]
-  runGs    = [ moveComputeMove [m..(m + n - 1)] (m + n + i) g | (i, g) <- zip [0..(k - 1)] gs ]
-  concatGs = foldr concatPrograms [] runGs
-  runF     = moveComputeMove [(m + n)..(m + n + k - 1)] 0 f
-  in pushArgs `concatPrograms` concatGs `concatPrograms` runF
+  n         = gsArity
+  k         = fArity
+  gsMaxRho  = maximum $ map rho gs
+  m         = maximum [ fArity, gsArity, rho f, gsMaxRho ]
+  movedArgs = moveArgs (m + 1) gsArity
+  runGs     = moveComputeMoveMany [(m + 1)..(m + n)] (m + n + 1) gs
+  runF      = moveComputeMove [(m + n + 1)..(m + n + k)] 0 f
+  in movedArgs `concatPrograms` runGs `concatPrograms` runF
   
   
 
