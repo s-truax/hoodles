@@ -1,4 +1,15 @@
+{-# LANGUAGE FlexibleContexts #-}
+
+module URM
+  ( Instruction(..)
+  , runProgram
+  , newURM
+  ) where
+
 import Data.List (maximumBy)
+import qualified Text.Parsec as Parsec
+import Control.Monad.Identity (Identity)
+
 -- Derive functor? Bifunctor?
 data Instruction = Z Int | S Int | T Int Int | J Int Int Int deriving Show
 
@@ -121,6 +132,7 @@ moveArgs offset arity = [ T i (offset + i) | i <- [0..(arity - 1)] ]
 -- compose the program that computes f with the programs that compute g_i.
 -- we need to specify the arity of f and the gs.
 -- Also... am I abusing `let`? How do I not make my function definitions (h)uge?
+-- See Cutland: Computability for nice visuals.
 -- Debug:
 -- TODO: Break down these let bindings and test them individually.
 compose :: Int -> Int -> [Instruction] -> [[Instruction]] -> [Instruction]
@@ -133,8 +145,7 @@ compose fArity gsArity f gs = let
   runGs     = moveComputeMoveMany [(m + 1)..(m + n)] (m + n + 1) gs
   runF      = moveComputeMove [(m + n + 1)..(m + n + k)] 0 f
   in movedArgs `concatPrograms` runGs `concatPrograms` runF
-  
-  
+
 
 -- Debug functions
 pprintStates :: [[Int]] -> IO ()
