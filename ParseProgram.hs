@@ -80,15 +80,15 @@ parseProgram = many line <* eof where
 
 main = do
   args     <- getArgs
-  let fname = head args
+  let fname       = head args
+  let programArgs = sequenceA $ readMaybe <$> tail args
+  let urm         = newURM <$> programArgs
   contents <- readFile fname
   case parse parseProgram fname contents of
-    Right p  -> print (runProgram (newURM [1, 2]) p)
+    Right p  -> print (runProgram <$> urm <*> pure p)
     Left parseErr -> (print parseErr)
   return ()
 
-{-
-sepEndByN n p sep = do
-  initial <- count (n - 1) (p >> sep)
-  last    <- p
+{- TODO:
+   * Add some failure messages to main
 -}
