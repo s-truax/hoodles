@@ -40,6 +40,12 @@ ateb n = case n `mod` 4 of 0 -> Z $ n `div` 4 + 1
                            3 -> (\(x, y, z) -> (J x y z)) $
                                  atez $ (n - 3) `div` 4 + 1
 
+-- TODO: The coding of [Instruction] -> Integer
+-- Also, the code of the add program is going to be
+-- 2^73727 + 2^{73727 + 1 + 1} + 2^{73727 + 1 + 9 + 2} +
+-- + 2^{73727 + 1 + 9 + 2  + 8191 + 3}, which we'll never be able to print.
+-- We're going to need some way to work with the codes of sequences.
+
 {-
 So now I should be able to write the function
 
