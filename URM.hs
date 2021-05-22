@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module URM
   ( Instruction(..)
@@ -6,12 +7,13 @@ module URM
   , newURM
   ) where
 
-import Data.List (maximumBy)
-import qualified Text.Parsec as Parsec
 import Control.Monad.Identity (Identity)
+import Control.Monad.Writer
 
 -- Derive functor? Bifunctor?
 data Instruction = Z Int | S Int | T Int Int | J Int Int Int deriving Show
+
+type URM = [Int]
 
 newURM :: [Int] -> [Int]
 newURM state = state ++ repeat 0
@@ -35,6 +37,13 @@ execJ urm m n q curr =
     then q
       else curr + 1
 
+execInstruction :: URM -> Instruction -> URM
+execInstruction urm instr =
+  case instr of (Z n)     -> execZ urm n
+                (S n)     -> execS urm n
+                (T m n)   -> execT urm m n
+                (J m n q) -> urm
+
 runProgram' urm p currInstrNum =
   if currInstrNum >= length p
     then urm
@@ -51,7 +60,7 @@ runProgram' urm p currInstrNum =
 runProgram urm p = head $ runProgram' urm p 0
 
 -- Run the URM in verbose mode. K is the number of registers to print.
-runProgramVerbose' k currInstrNum p urm = 
+runProgramVerbose' k currInstrNum p urm =
   if currInstrNum >= length p then [] else
     case p !! currInstrNum of
       (Z n)     -> [(take k urm, take k $ execZ urm n, (Z n))] ++
@@ -65,6 +74,35 @@ runProgramVerbose' k currInstrNum p urm =
 
 -- Print 7 registers by default. 
 runProgramVerbose = runProgramVerbose' 7 0
+
+-- Get the kth instruction of a program
+getInstr :: [Instruction] -> Int -> Maybe Instruction
+getInstr [] _     = Nothing
+getInstr (x:xs) 0 = Just x
+getInstr (x:xs) k = getInstr xs (k - 1)
+
+
+-- Logs the instruction and K registers of the pre and post instruction URM
+logInstruction ::
+  Int -> Instruction -> URM -> Writer [(URM, URM, Instruction)] URM
+logInstruction k instr urm = let
+  pre  = take k $ urm
+  post = take k $ execInstruction urm instr in
+  writer (post, [(pre, post, instr)])
+
+runProgramVerbose2' ::
+  Int -> Int -> [Instruction] -> URM -> Writer [(URM, URM, Instruction)] URM
+runProgramVerbose2' k currInstrNum prog urm
+  | currInstrNum >= length prog = return urm
+  | otherwise                   =
+    logInstruction k currInstr urm >>= runProgramVerbose2' k nextInstrNum prog
+  where currInstr = prog !! currInstrNum
+        nextInstrNum = case currInstr of J m n q -> execJ urm m n q currInstrNum
+                                         _       -> currInstrNum + 1
+
+runProgramVerbose2 ::
+  [Instruction] -> URM -> [(URM, URM, Instruction)]
+runProgramVerbose2 prog urm = snd . runWriter $ runProgramVerbose2' 7 0 prog urm
 
 -- Utility functions
 
