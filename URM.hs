@@ -3,7 +3,9 @@
 
 module URM
   ( Instruction(..)
+  , URM
   , runProgram
+  , runProgramVerbose2
   , newURM
   ) where
 

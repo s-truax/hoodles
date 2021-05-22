@@ -6,7 +6,12 @@ import Control.Monad.Identity (Identity)
 import System.Environment (getArgs)
 import System.IO (readFile)
 
-import URM (Instruction(..), newURM, runProgram)
+import URM (Instruction(..)
+           , URM
+           , newURM
+           , runProgram
+           , runProgramVerbose2
+           )
 
 {-
   <num>         ::= [0-9]+
@@ -78,6 +83,13 @@ parseProgram :: Parsec String () [Instruction]
 parseProgram = many line <* eof where
   line = choice [parseJ, parseT, parseS, parseZ] <* newline
 
+-- Pretty-print output of runProgramVerbose2
+-- TODO: The Nothing case feels like it should be impossible.
+pprintStates :: Maybe [(URM, URM, Instruction)] -> IO ()
+pprintStates Nothing   = print "Something terrible has happened"
+pprintStates (Just xs) = mapM_ print xs
+
+main :: IO ()
 main = do
   args     <- getArgs
   let fname       = head args
@@ -85,9 +97,9 @@ main = do
   let urm         = newURM <$> programArgs
   contents <- readFile fname
   case parse parseProgram fname contents of
-    Right p  -> print (runProgram <$> urm <*> pure p)
+                                -- Maybe [(URM, URM, Instruction)]
+    Right p       -> pprintStates (runProgramVerbose2 <$> pure p <*> urm)
     Left parseErr -> (print parseErr)
-  return ()
 
 {- TODO:
    * Add some failure messages to main
