@@ -15,23 +15,24 @@ data Instruction = Z Int | S Int | T Int Int | J Int Int Int deriving Show
 
 type URM = [Int]
 
-newURM :: [Int] -> [Int]
+newURM :: [Int] -> URM
 newURM state = state ++ repeat 0
 
 -- Replace the value in register 'reg' with 'f' applied to that value
-modifyRegister :: [Int] -> (Int -> Int) -> Int -> [Int]
+modifyRegister :: URM -> (Int -> Int) -> Int -> URM
 modifyRegister urm f 0   = f (head urm) : tail urm
 modifyRegister urm f reg = head urm : modifyRegister (tail urm) f (reg - 1)
 
-execZ :: [Int] -> Int -> [Int]
+execZ :: URM -> Int -> URM
 execZ urm = modifyRegister urm (\x -> 0)
 
-execS :: [Int] -> Int -> [Int]
+execS :: URM -> Int -> URM
 execS urm = modifyRegister urm (\x -> x + 1)
 
-execT :: [Int] -> Int -> Int -> [Int]
+execT :: URM -> Int -> Int -> URM
 execT urm m n = modifyRegister urm (\x -> urm !! m) n
 
+execJ :: URM -> Int -> Int -> Int -> Int -> Int
 execJ urm m n q curr =
   if (urm !! m) == (urm !! n)
     then q
@@ -199,3 +200,9 @@ sub  = []  -- TODO
 
 test1 = runProgram twothree addP -- should output 5
 test2 = runProgram five sub1     -- expect 4
+
+{-
+Notes:
+TODO: Should a URM have it's program associatd with it? I.e, maybe a URM
+      should have type ([Int], Instruction) or (Nonempty Int, [Instruction])
+-}
