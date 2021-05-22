@@ -75,7 +75,7 @@ runProgramVerbose' k currInstrNum p urm =
       (J m n q) -> [(take k urm, take k urm, (J m n q))] ++
                      runProgramVerbose' k (execJ urm m n q currInstrNum) p urm
 
--- Print 7 registers by default. 
+-- Print 7 registers by default.
 runProgramVerbose = runProgramVerbose' 7 0
 
 -- Get the kth instruction of a program
@@ -90,8 +90,8 @@ logInstruction ::
   Int -> Instruction -> URM -> Writer [(URM, URM, Instruction)] URM
 logInstruction k instr urm = let
   pre  = take k $ urm
-  post = take k $ execInstruction urm instr in
-  writer (post, [(pre, post, instr)])
+  post = execInstruction urm instr in
+  writer (post, [(pre, take k post, instr)])
 
 runProgramVerbose2' ::
   Int -> Int -> [Instruction] -> URM -> Writer [(URM, URM, Instruction)] URM
